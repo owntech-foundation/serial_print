@@ -1,0 +1,14 @@
+{
+    "name": "SerialPrintChannels",
+    "version": "0.1",
+    "description": "A library to register live float channels and stream their names or values over serial in OwnTech applications",
+    "keywords": "OwnTech,",
+    "authors": {
+        "name": "Luiz Villa",
+        "email": "luiz.villa@laas.fr"
+    },
+    "license": "LGPL-2.1-only",
+    "frameworks": "zephyr",
+    "headers": ["SerialPrintChannels.h"],
+    "exclude": ["CMakeLists.txt"]
+}
