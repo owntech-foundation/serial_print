@@ -1,5 +1,7 @@
 #include "SerialPrintChannels.h"
 
+#include <stdio.h>
+
 #include <zephyr/sys/printk.h>
 
 SerialPrintChannels::SerialPrintChannels(uint8_t default_capacity)
@@ -56,20 +58,34 @@ void SerialPrintChannels::connectChannel(float32_t &channel, const char name[])
 
 void SerialPrintChannels::printHeader() const
 {
+	char row_buffer[MAX_ROW_LENGTH] = {};
+	size_t used_length = 0U;
+
 	for (uint8_t k = 0U; k < channel_count; ++k) {
-		printSeparatorIfNeeded(k);
-		printk("%s", names[k]);
+		if (k > 0U) {
+			appendText(row_buffer, sizeof(row_buffer), used_length, separator);
+		}
+		appendText(row_buffer, sizeof(row_buffer), used_length, names[k]);
 	}
-	printk("\n");
+
+	appendText(row_buffer, sizeof(row_buffer), used_length, "\n");
+	printk("%s", row_buffer);
 }
 
 void SerialPrintChannels::printValues() const
 {
+	char row_buffer[MAX_ROW_LENGTH] = {};
+	size_t used_length = 0U;
+
 	for (uint8_t k = 0U; k < channel_count; ++k) {
-		printSeparatorIfNeeded(k);
-		printk("%7.2f", (double)(*channels[k]));
+		if (k > 0U) {
+			appendText(row_buffer, sizeof(row_buffer), used_length, separator);
+		}
+		appendFormattedValue(row_buffer, sizeof(row_buffer), used_length, *channels[k]);
 	}
-	printk("\n");
+
+	appendText(row_buffer, sizeof(row_buffer), used_length, "\n");
+	printk("%s", row_buffer);
 }
 
 void SerialPrintChannels::copySeparator(const char *separator_string)
@@ -94,9 +110,46 @@ void SerialPrintChannels::copyName(uint8_t index, const char *name)
 	names[index][MAX_NAME_LENGTH - 1U] = '\0';
 }
 
-void SerialPrintChannels::printSeparatorIfNeeded(uint8_t index) const
+void SerialPrintChannels::appendText(char *buffer,
+									 size_t buffer_size,
+									 size_t &used_length,
+									 const char *text) const
 {
-	if (index > 0U) {
-		printk("%s", separator);
+	if (text == nullptr || used_length >= (buffer_size - 1U)) {
+		return;
+	}
+
+	int written = snprintf(&buffer[used_length], buffer_size - used_length, "%s", text);
+	if (written <= 0) {
+		return;
+	}
+
+	size_t write_length = static_cast<size_t>(written);
+	if (write_length >= (buffer_size - used_length)) {
+		used_length = buffer_size - 1U;
+	} else {
+		used_length += write_length;
+	}
+}
+
+void SerialPrintChannels::appendFormattedValue(char *buffer,
+											   size_t buffer_size,
+											   size_t &used_length,
+											   float32_t value) const
+{
+	if (used_length >= (buffer_size - 1U)) {
+		return;
+	}
+
+	int written = snprintf(&buffer[used_length], buffer_size - used_length, "%7.2f", (double)value);
+	if (written <= 0) {
+		return;
+	}
+
+	size_t write_length = static_cast<size_t>(written);
+	if (write_length >= (buffer_size - used_length)) {
+		used_length = buffer_size - 1U;
+	} else {
+		used_length += write_length;
 	}
 }

@@ -17,6 +17,10 @@ public:
 	static constexpr uint8_t MAX_CHANNELS = 32U;
 	static constexpr size_t MAX_NAME_LENGTH = 32U;
 	static constexpr size_t MAX_SEPARATOR_LENGTH = 8U;
+	static constexpr size_t MAX_FIELD_PRINT_LENGTH = 32U;
+	static constexpr size_t MAX_ROW_LENGTH =
+		(MAX_CHANNELS * MAX_FIELD_PRINT_LENGTH) +
+		((MAX_CHANNELS - 1U) * MAX_SEPARATOR_LENGTH) + 2U;
 
 	/**
 	 * @brief Construct a serial printer with the default active capacity.
@@ -75,7 +79,9 @@ private:
 
 	void copyName(uint8_t index, const char *name);
 
-	void printSeparatorIfNeeded(uint8_t index) const;
+	void appendText(char *buffer, size_t buffer_size, size_t &used_length, const char *text) const;
+
+	void appendFormattedValue(char *buffer, size_t buffer_size, size_t &used_length, float32_t value) const;
 
 	float32_t *channels[MAX_CHANNELS];
 	char names[MAX_CHANNELS][MAX_NAME_LENGTH];
